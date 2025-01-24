@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RSS Feed Viewer</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    .rss-card {
+      margin-bottom: 20px;
+    }
+    .card-img-top {
+      height: 150px;
+      object-fit: cover;
+    }
+  </style>
+</head>
+<body>
+  <div class="container my-4">
+    <h1 class="text-center">RSS Feed Viewer</h1>
+    <div class="mb-4">
+      <label for="rssDropdown" class="form-label">Select RSS Feed:</label>
+      <select id="rssDropdown" class="form-select">
+        <option value="">-- Select a Feed --</option>
+   
+			 
+        <option value="https://werstupid.com/feed">We R Stupid</option>
+		 <option value="https://livefitnow.in/feed">Live Fit Now</option>
+		  <option value="https://lifefitindia.com/feed">Life Fit India</option>
+		 <option value="https://tweakindia.com/category/wellness/fitness/feed/">Tweak India Fitness</option>
+		   <option value="https://tweakindia.com/category/health/feed/">Tweak India</option>
+		        <option value="https://gofitnesspro.in/feed/">Go Fitness Pro</option>
+        <option value="https://fitspire.fit/blogs/news.atom">Fitspire</option>
+      
+       
+		
+		  
+		  
+	
+      </select>
+    </div>
+    <div class="row" id="rssContainer"></div>
+  </div>
+
+  <script>
+    const rssContainer = document.getElementById("rssContainer");
+    const rssDropdown = document.getElementById("rssDropdown");
+
+    // Function to extract image from HTML content
+    function extractImage(content) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(content, "text/html");
+      const imgElement = doc.querySelector("img");
+      return imgElement ? imgElement.src : null;
+    }
+
+    // Function to fetch RSS feed and parse XML
+    async function fetchRSS(url) {
+      try {
+        const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`);
+        const data = await response.json();
+        return data.items || [];
+      } catch (error) {
+        console.error("Error fetching RSS feed:", error);
+        return [];
+      }
+    }
+
+    // Function to display RSS feeds
+    async function displayFeeds(feedUrl) {
+      rssContainer.innerHTML = ""; // Clear previous content
+      const items = await fetchRSS(feedUrl);
+
+      items.slice(0, 8).forEach((item) => {
+        // Extract image URL
+        let imageUrl = item.enclosure?.link || extractImage(item.content || item.description);
+        if (!imageUrl) {
+          imageUrl = "https://placehold.co/600x400"; // Fallback image
+        }
+
+        const card = document.createElement("div");
+        card.className = "col-md-3 rss-card";
+
+        card.innerHTML = `
+          <div class="card h-100">
+            <img src="${imageUrl}" class="card-img-top" alt="Image">
+            <div class="card-body">
+              <h5 class="card-title">${item.title}</h5>
+              <p class="card-text">${item.description.substring(0, 100)}...</p>
+              <a href="${item.link}" target="_blank" class="btn btn-primary">Read More</a>
+            </div>
+          </div>
+        `;
+
+        rssContainer.appendChild(card);
+      });
+    }
+
+    // Event listener for dropdown
+    rssDropdown.addEventListener("change", (event) => {
+      const selectedFeed = event.target.value;
+      if (selectedFeed) {
+        displayFeeds(selectedFeed);
+      } else {
+        rssContainer.innerHTML = ""; // Clear content if no feed is selected
+      }
+    });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
